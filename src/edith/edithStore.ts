@@ -1,0 +1,1 @@
+const KEY='edith_encrypted'; export function saveEdithState(s){localStorage.setItem(KEY,btoa(JSON.stringify(s)));} export function loadEdithState(){try{return JSON.parse(atob(localStorage.getItem(KEY)||'{}'));}catch(e){return {};}}

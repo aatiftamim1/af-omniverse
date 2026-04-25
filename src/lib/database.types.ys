@@ -1,0 +1,162 @@
+export type Database = {
+  public: {
+    Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          username: string | null;
+          full_name: string | null;
+          avatar_url: string | null;
+          level: number;
+          xp: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          username?: string | null;
+          full_name?: string | null;
+          avatar_url?: string | null;
+          level?: number;
+          xp?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      chat_messages: {
+        Row: {
+          id: string;
+          user_id: string;
+          session_id: string | null;
+          role: 'user' | 'assistant' | 'system';
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          session_id?: string | null;
+          role: 'user' | 'assistant' | 'system';
+          content: string;
+          created_at?: string;
+        };
+      };
+      protocols: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          description: string | null;
+          level: number;
+          progress: number;
+          status: 'active' | 'completed' | 'paused';
+          color: string | null;
+          icon: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          description?: string | null;
+          level?: number;
+          progress?: number;
+          status?: 'active' | 'completed' | 'paused';
+          color?: string | null;
+          icon?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      protocol_tasks: {
+        Row: {
+          id: string;
+          protocol_id: string;
+          title: string;
+          description: string | null;
+          completed: boolean;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          protocol_id: string;
+          title: string;
+          description?: string | null;
+          completed?: boolean;
+          order_index?: number;
+          created_at?: string;
+        };
+      };
+      code_files: {
+        Row: {
+          id: string;
+          user_id: string;
+          filename: string;
+          language: string | null;
+          content: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          filename: string;
+          language?: string | null;
+          content?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      lessons: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          subject: 'english' | 'maths' | 'urdu' | 'science' | 'other';
+          content: string | null;
+          grade_level: string | null;
+          language: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          subject: 'english' | 'maths' | 'urdu' | 'science' | 'other';
+          content?: string | null;
+          grade_level?: string | null;
+          language?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      user_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          theme_color: string;
+          notifications_enabled: boolean;
+          sound_enabled: boolean;
+          auto_save: boolean;
+          language: string;
+          ai_model: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          theme_color?: string;
+          notifications_enabled?: boolean;
+          sound_enabled?: boolean;
+          auto_save?: boolean;
+          language?: string;
+          ai_model?: string;
+          updated_at?: string;
+        };
+      };
+    };
+  };
+};

@@ -1,0 +1,3216 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+public/
+  manifest.json
+  sw.js
+src/
+  components/
+    admin/
+      AdminPanel.tsx
+    layout/
+      Header.tsx
+      PasscodeModal.tsx
+      Sidebar.tsx
+    ui/
+      Badge.tsx
+      GlassCard.tsx
+      Modal.tsx
+      ProgressBar.tsx
+      Toggle.tsx
+  context/
+    AppContext.tsx
+  hooks/
+    useLocalStorage.ts
+    useSecretAccess.ts
+  lib/
+    supabase.ts
+    types.ts
+  pages/
+    ChatPage.tsx
+    CodeLabPage.tsx
+    Dashboard.tsx
+    EducatorPage.tsx
+    MonitorPage.tsx
+    SettingsPage.tsx
+    SyncPage.tsx
+    TrainingPage.tsx
+  App.tsx
+  index.css
+  main.tsx
+  vite-env.d.ts
+.gitignore
+eslint.config.js
+index.html
+package.json
+postcss.config.js
+tailwind.config.js
+tsconfig.app.json
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="public/manifest.json">
+{
+  "name": "AF OMNIVERSE",
+  "short_name": "AF OMNI",
+  "description": "Master Aatif's Digital Universe — Command Center, Neural AI, Training Protocols & More",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07070f",
+  "theme_color": "#00d4ff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%2307070f'/><text x='96' y='125' text-anchor='middle' font-size='80' fill='%2300d4ff'>♾️</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%2307070f'/><text x='256' y='340' text-anchor='middle' font-size='220' fill='%2300d4ff'>♾️</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities", "education"],
+  "lang": "en",
+  "dir": "ltr"
+}
+</file>
+
+<file path="public/sw.js">
+const CACHE_NAME = 'af-omniverse-v1';
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      const networkFetch = fetch(event.request).then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      });
+      return cached || networkFetch;
+    })
+  );
+});
+</file>
+
+<file path="src/components/admin/AdminPanel.tsx">
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Shield, Palette, Database, Sliders, Trash2, Download, Upload } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+import { Toggle } from '../ui/Toggle';
+import { NeonColor } from '../../lib/types';
+
+const neonOptions: { id: NeonColor; label: string; color: string }[] = [
+  { id: 'cyan', label: 'Cyber Cyan', color: '#00d4ff' },
+  { id: 'blue', label: 'Deep Blue', color: '#0088ff' },
+  { id: 'red', label: 'Crimson Red', color: '#ff3366' },
+  { id: 'green', label: 'Matrix Green', color: '#00ff88' },
+  { id: 'orange', label: 'Solar Orange', color: '#ff8800' },
+];
+
+export function AdminPanel() {
+  const { showAdminPanel, setShowAdminPanel, themeColor, neonColor, setNeonColor, settings, setSettings } = useApp();
+
+  return (
+    <AnimatePresence>
+      {showAdminPanel && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowAdminPanel(false)} />
+          <motion.div
+            className="relative z-10 w-full max-w-lg glass-panel rounded-2xl border-2 overflow-hidden"
+            style={{ borderColor: `${themeColor}44` }}
+            initial={{ y: 60, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 60, opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+          >
+            <div
+              className="flex items-center justify-between px-5 py-4 border-b border-white/10"
+              style={{ background: `linear-gradient(90deg, ${themeColor}22, transparent)` }}
+            >
+              <div className="flex items-center gap-2">
+                <Shield size={18} style={{ color: themeColor }} />
+                <span className="font-bold text-white tracking-wide text-sm font-mono">MASTER CONTROL PANEL</span>
+              </div>
+              <button onClick={() => setShowAdminPanel(false)} className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-6 max-h-[70vh] overflow-y-auto">
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Palette size={15} style={{ color: themeColor }} />
+                  <h3 className="text-xs font-bold text-gray-300 uppercase tracking-widest">Theme Engine</h3>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {neonOptions.map(opt => (
+                    <motion.button
+                      key={opt.id}
+                      onClick={() => setNeonColor(opt.id)}
+                      className="flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all"
+                      style={{
+                        borderColor: neonColor === opt.id ? opt.color : 'transparent',
+                        backgroundColor: neonColor === opt.id ? `${opt.color}22` : 'rgba(255,255,255,0.03)',
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <div className="w-6 h-6 rounded-full" style={{ backgroundColor: opt.color, boxShadow: `0 0 8px ${opt.color}` }} />
+                      <span className="text-[10px] text-gray-400 font-mono truncate w-full text-center">{opt.label.split(' ')[0]}</span>
+                    </motion.button>
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Sliders size={15} style={{ color: themeColor }} />
+                  <h3 className="text-xs font-bold text-gray-300 uppercase tracking-widest">System Overrides</h3>
+                </div>
+                <div className="space-y-3 p-3 rounded-xl bg-white/5">
+                  <Toggle
+                    checked={settings.notifications_enabled ?? true}
+                    onChange={v => setSettings({ ...settings, notifications_enabled: v })}
+                    label="System Notifications"
+                  />
+                  <div className="border-t border-white/5 pt-3">
+                    <Toggle
+                      checked={settings.sound_enabled ?? false}
+                      onChange={v => setSettings({ ...settings, sound_enabled: v })}
+                      label="Sound Effects"
+                    />
+                  </div>
+                  <div className="border-t border-white/5 pt-3">
+                    <Toggle
+                      checked={settings.auto_save ?? true}
+                      onChange={v => setSettings({ ...settings, auto_save: v })}
+                      label="Auto-Save"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Database size={15} style={{ color: themeColor }} />
+                  <h3 className="text-xs font-bold text-gray-300 uppercase tracking-widest">Data Management</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { icon: Download, label: 'Export Data', action: () => alert('Export feature — connect to your backend') },
+                    { icon: Upload, label: 'Import Data', action: () => alert('Import feature — connect to your backend') },
+                    { icon: Trash2, label: 'Clear Cache', action: () => { localStorage.clear(); alert('Cache cleared'); } },
+                  ].map(item => (
+                    <motion.button
+                      key={item.label}
+                      onClick={item.action}
+                      className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all text-gray-400 hover:text-white"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <item.icon size={16} />
+                      <span className="text-[10px] font-mono text-center">{item.label}</span>
+                    </motion.button>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+</file>
+
+<file path="src/components/layout/Header.tsx">
+import { motion } from 'framer-motion';
+import { Menu, Shield, Bell } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+
+export function Header() {
+  const { setSidebarOpen, sidebarOpen, incrementHeaderClick, themeColor, isAdmin, setShowAdminPanel } = useApp();
+
+  return (
+    <motion.header
+      className="fixed top-0 left-0 right-0 z-40 h-14 glass-panel border-b border-white/10 flex items-center px-4"
+      initial={{ y: -56, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+    >
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="p-2 rounded-xl hover:bg-white/10 transition-colors text-gray-300 hover:text-white"
+        aria-label="Toggle menu"
+      >
+        <Menu size={20} />
+      </button>
+
+      <div className="flex-1 flex justify-center">
+        <motion.button
+          onClick={incrementHeaderClick}
+          className="select-none focus:outline-none"
+          whileTap={{ scale: 0.95 }}
+        >
+          <span
+            className="text-lg font-bold tracking-widest font-mono"
+            style={{
+              color: themeColor,
+              textShadow: `0 0 10px ${themeColor}, 0 0 20px ${themeColor}88, 0 0 40px ${themeColor}44`,
+            }}
+          >
+            AF INFINITY ♾️
+          </span>
+        </motion.button>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button className="p-2 rounded-xl hover:bg-white/10 transition-colors text-gray-300 hover:text-white">
+          <Bell size={18} />
+        </button>
+        {isAdmin && (
+          <motion.button
+            onClick={() => setShowAdminPanel(true)}
+            className="p-2 rounded-xl transition-colors"
+            style={{ color: themeColor }}
+            whileHover={{ scale: 1.1 }}
+            animate={{ boxShadow: [`0 0 0px ${themeColor}`, `0 0 12px ${themeColor}`, `0 0 0px ${themeColor}`] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            title="Admin Panel"
+          >
+            <Shield size={18} />
+          </motion.button>
+        )}
+      </div>
+    </motion.header>
+  );
+}
+</file>
+
+<file path="src/components/layout/PasscodeModal.tsx">
+import { motion } from 'framer-motion';
+import { Shield, Lock } from 'lucide-react';
+import { Modal } from '../ui/Modal';
+import { useApp } from '../../context/AppContext';
+import { useSecretAccess } from '../../hooks/useSecretAccess';
+
+export function PasscodeModal() {
+  const { showPasscodeModal, themeColor } = useApp();
+  const { passcode, setPasscode, error, shake, verifyPasscode, closeModal } = useSecretAccess();
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') verifyPasscode();
+  };
+
+  return (
+    <Modal open={showPasscodeModal} onClose={closeModal}>
+      <div className="text-center space-y-6">
+        <div className="flex justify-center">
+          <motion.div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: `${themeColor}22`, border: `1px solid ${themeColor}44` }}
+            animate={{ boxShadow: [`0 0 0px ${themeColor}`, `0 0 20px ${themeColor}88`, `0 0 0px ${themeColor}`] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Shield size={28} style={{ color: themeColor }} />
+          </motion.div>
+        </div>
+
+        <div>
+          <h3 className="text-xl font-bold text-white tracking-wide">MASTER CONTROL</h3>
+          <p className="text-xs text-gray-400 mt-1 font-mono">ENTER SECURITY PASSCODE</p>
+        </div>
+
+        <motion.div
+          animate={shake ? { x: [-8, 8, -8, 8, 0] } : {}}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="relative">
+            <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input
+              type="password"
+              value={passcode}
+              onChange={e => setPasscode(e.target.value)}
+              onKeyDown={handleKey}
+              maxLength={8}
+              placeholder="••••"
+              className="w-full bg-white/5 border border-white/20 rounded-xl pl-9 pr-4 py-3 text-center text-white text-xl tracking-[0.5em] font-mono focus:outline-none transition-colors"
+              style={{ caretColor: themeColor }}
+              onFocus={e => (e.target.style.borderColor = `${themeColor}66`)}
+              onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.2)')}
+              autoFocus
+            />
+          </div>
+          {error && (
+            <motion.p
+              className="text-xs font-mono mt-2"
+              style={{ color: '#ff3366' }}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              {error}
+            </motion.p>
+          )}
+        </motion.div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={closeModal}
+            className="flex-1 py-2.5 rounded-xl border border-white/20 text-gray-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={verifyPasscode}
+            className="flex-1 py-2.5 rounded-xl font-medium text-sm transition-all text-white"
+            style={{ background: `linear-gradient(135deg, ${themeColor}cc, ${themeColor}88)` }}
+          >
+            ACCESS
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+</file>
+
+<file path="src/components/layout/Sidebar.tsx">
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  LayoutDashboard, MessageSquare, Zap, Code2, GraduationCap,
+  Activity, Cloud, Settings, X, ChevronRight
+} from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+
+const navItems = [
+  { id: 'dashboard', label: 'Command Center', icon: LayoutDashboard },
+  { id: 'chat', label: 'Neural Chat', icon: MessageSquare },
+  { id: 'training', label: 'Protocol Training', icon: Zap },
+  { id: 'codelab', label: 'Code Lab', icon: Code2 },
+  { id: 'educator', label: "Educator's Vault", icon: GraduationCap },
+  { id: 'monitor', label: 'System Monitor', icon: Activity },
+  { id: 'sync', label: 'Cloud Sync', icon: Cloud },
+  { id: 'settings', label: 'Settings', icon: Settings },
+];
+
+export function Sidebar() {
+  const { sidebarOpen, setSidebarOpen, activePage, setActivePage, themeColor } = useApp();
+
+  const navigate = (id: string) => {
+    setActivePage(id);
+    setSidebarOpen(false);
+  };
+
+  return (
+    <AnimatePresence>
+      {sidebarOpen && (
+        <>
+          <motion.div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+          />
+          <motion.aside
+            className="fixed top-0 left-0 h-full w-72 z-40 glass-panel border-r border-white/10 flex flex-col"
+            initial={{ x: -288 }}
+            animate={{ x: 0 }}
+            exit={{ x: -288 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <div>
+                <p className="text-xs text-gray-400 font-mono">SYSTEM</p>
+                <p className="font-bold text-white">AF OMNIVERSE</p>
+              </div>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-2 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+              {navItems.map((item, i) => {
+                const Icon = item.icon;
+                const active = activePage === item.id;
+                return (
+                  <motion.button
+                    key={item.id}
+                    onClick={() => navigate(item.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all group ${
+                      active ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                    style={active ? { backgroundColor: `${themeColor}22`, border: `1px solid ${themeColor}44` } : { border: '1px solid transparent' }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    whileHover={{ x: 4 }}
+                  >
+                    <Icon size={18} style={active ? { color: themeColor } : {}} />
+                    <span className="flex-1 text-sm font-medium">{item.label}</span>
+                    {active && <ChevronRight size={14} style={{ color: themeColor }} />}
+                  </motion.button>
+                );
+              })}
+            </nav>
+
+            <div className="p-4 border-t border-white/10">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
+                  style={{ background: `linear-gradient(135deg, ${themeColor}44, ${themeColor}22)`, border: `1px solid ${themeColor}44`, color: themeColor }}
+                >
+                  MA
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Master Aatif</p>
+                  <p className="text-xs text-gray-400">Administrator</p>
+                </div>
+              </div>
+            </div>
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+</file>
+
+<file path="src/components/ui/Badge.tsx">
+import { ReactNode } from 'react';
+
+interface BadgeProps {
+  children: ReactNode;
+  color?: string;
+  size?: 'sm' | 'md';
+}
+
+export function Badge({ children, color = '#00d4ff', size = 'sm' }: BadgeProps) {
+  const padding = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full font-medium ${padding}`}
+      style={{ backgroundColor: `${color}22`, color, border: `1px solid ${color}44` }}
+    >
+      {children}
+    </span>
+  );
+}
+</file>
+
+<file path="src/components/ui/GlassCard.tsx">
+import { ReactNode } from 'react';
+import { motion } from 'framer-motion';
+
+interface GlassCardProps {
+  children: ReactNode;
+  className?: string;
+  hover?: boolean;
+  onClick?: () => void;
+  glow?: string;
+  delay?: number;
+}
+
+export function GlassCard({ children, className = '', hover = false, onClick, glow, delay = 0 }: GlassCardProps) {
+  return (
+    <motion.div
+      className={`glass-panel rounded-2xl border border-white/10 ${hover ? 'cursor-pointer' : ''} ${className}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4 }}
+      whileHover={hover ? { scale: 1.02, y: -2 } : undefined}
+      onClick={onClick}
+      style={glow ? { boxShadow: `0 0 20px ${glow}22, 0 0 40px ${glow}11` } : undefined}
+    >
+      {children}
+    </motion.div>
+  );
+}
+</file>
+
+<file path="src/components/ui/Modal.tsx">
+import { ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
+
+interface ModalProps {
+  open: boolean;
+  onClose: () => void;
+  title?: string;
+  children: ReactNode;
+  width?: string;
+}
+
+export function Modal({ open, onClose, title, children, width = 'max-w-md' }: ModalProps) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <motion.div
+            className={`relative z-10 w-full ${width} glass-panel rounded-2xl p-6 border border-white/10`}
+            initial={{ scale: 0.85, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.85, opacity: 0, y: 20 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+          >
+            {title && (
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">{title}</h2>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            )}
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+</file>
+
+<file path="src/components/ui/ProgressBar.tsx">
+import { useApp } from '../../context/AppContext';
+
+interface ProgressBarProps {
+  value: number;
+  max?: number;
+  color?: string;
+  height?: number;
+  showLabel?: boolean;
+  animated?: boolean;
+}
+
+export function ProgressBar({ value, max = 100, color, height = 6, showLabel = false, animated = true }: ProgressBarProps) {
+  const { themeColor } = useApp();
+  const pct = Math.min(100, Math.max(0, (value / max) * 100));
+  const barColor = color || themeColor;
+
+  return (
+    <div className="w-full">
+      {showLabel && (
+        <div className="flex justify-between text-xs text-gray-400 mb-1">
+          <span>Progress</span>
+          <span>{Math.round(pct)}%</span>
+        </div>
+      )}
+      <div
+        className="w-full rounded-full bg-white/10 overflow-hidden"
+        style={{ height }}
+      >
+        <div
+          className={`h-full rounded-full ${animated ? 'transition-all duration-700' : ''}`}
+          style={{
+            width: `${pct}%`,
+            background: `linear-gradient(90deg, ${barColor}88, ${barColor})`,
+            boxShadow: `0 0 8px ${barColor}66`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/ui/Toggle.tsx">
+import { useApp } from '../../context/AppContext';
+
+interface ToggleProps {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label?: string;
+  description?: string;
+}
+
+export function Toggle({ checked, onChange, label, description }: ToggleProps) {
+  const { themeColor } = useApp();
+  return (
+    <div className="flex items-center justify-between gap-4">
+      {(label || description) && (
+        <div>
+          {label && <p className="text-sm font-medium text-white">{label}</p>}
+          {description && <p className="text-xs text-gray-400 mt-0.5">{description}</p>}
+        </div>
+      )}
+      <button
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0 ${checked ? 'bg-opacity-100' : 'bg-white/10'}`}
+        style={{ backgroundColor: checked ? themeColor : undefined }}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${checked ? 'translate-x-6' : 'translate-x-0'}`}
+        />
+      </button>
+    </div>
+  );
+}
+</file>
+
+<file path="src/context/AppContext.tsx">
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { NeonColor, AppSettings } from '../lib/types';
+
+interface AppContextType {
+  isAdmin: boolean;
+  setIsAdmin: (v: boolean) => void;
+  activePage: string;
+  setActivePage: (p: string) => void;
+  sidebarOpen: boolean;
+  setSidebarOpen: (v: boolean) => void;
+  neonColor: NeonColor;
+  setNeonColor: (c: NeonColor) => void;
+  themeColor: string;
+  settings: Partial<AppSettings>;
+  setSettings: (s: Partial<AppSettings>) => void;
+  headerClickCount: number;
+  incrementHeaderClick: () => void;
+  resetHeaderClick: () => void;
+  showPasscodeModal: boolean;
+  setShowPasscodeModal: (v: boolean) => void;
+  showAdminPanel: boolean;
+  setShowAdminPanel: (v: boolean) => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+const neonColorMap: Record<NeonColor, string> = {
+  cyan: '#00d4ff',
+  blue: '#0088ff',
+  red: '#ff3366',
+  green: '#00ff88',
+  orange: '#ff8800',
+};
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [activePage, setActivePage] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [neonColor, setNeonColor] = useState<NeonColor>('cyan');
+  const [settings, setSettings] = useState<Partial<AppSettings>>({
+    notifications_enabled: true,
+    sound_enabled: false,
+    auto_save: true,
+    language: 'en',
+    ai_model: 'gpt-4',
+  });
+  const [headerClickCount, setHeaderClickCount] = useState(0);
+  const [showPasscodeModal, setShowPasscodeModal] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [clickTimer, setClickTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  const themeColor = neonColorMap[neonColor];
+
+  const incrementHeaderClick = () => {
+    const newCount = headerClickCount + 1;
+    setHeaderClickCount(newCount);
+    if (clickTimer) clearTimeout(clickTimer);
+    const t = setTimeout(() => setHeaderClickCount(0), 2000);
+    setClickTimer(t);
+    if (newCount >= 3) {
+      setHeaderClickCount(0);
+      if (clickTimer) clearTimeout(clickTimer);
+      setShowPasscodeModal(true);
+    }
+  };
+
+  const resetHeaderClick = () => {
+    setHeaderClickCount(0);
+    if (clickTimer) clearTimeout(clickTimer);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (clickTimer) clearTimeout(clickTimer);
+    };
+  }, [clickTimer]);
+
+  return (
+    <AppContext.Provider value={{
+      isAdmin, setIsAdmin,
+      activePage, setActivePage,
+      sidebarOpen, setSidebarOpen,
+      neonColor, setNeonColor,
+      themeColor,
+      settings, setSettings,
+      headerClickCount, incrementHeaderClick, resetHeaderClick,
+      showPasscodeModal, setShowPasscodeModal,
+      showAdminPanel, setShowAdminPanel,
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useApp must be used within AppProvider');
+  return ctx;
+}
+</file>
+
+<file path="src/hooks/useLocalStorage.ts">
+import { useState, useEffect } from 'react';
+
+export function useLocalStorage<T>(key: string, initialValue: T) {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? (JSON.parse(item) as T) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
+
+  const setValue = (value: T | ((val: T) => T)) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch {
+      console.error('LocalStorage error');
+    }
+  };
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === key && e.newValue) {
+        try {
+          setStoredValue(JSON.parse(e.newValue) as T);
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [key]);
+
+  return [storedValue, setValue] as const;
+}
+</file>
+
+<file path="src/hooks/useSecretAccess.ts">
+import { useState } from 'react';
+import { useApp } from '../context/AppContext';
+
+const SECRET_PASSCODE = '3278';
+
+export function useSecretAccess() {
+  const { setIsAdmin, setShowPasscodeModal, setShowAdminPanel } = useApp();
+  const [passcode, setPasscode] = useState('');
+  const [error, setError] = useState('');
+  const [shake, setShake] = useState(false);
+
+  const verifyPasscode = () => {
+    if (passcode === SECRET_PASSCODE) {
+      setIsAdmin(true);
+      setShowPasscodeModal(false);
+      setShowAdminPanel(true);
+      setPasscode('');
+      setError('');
+    } else {
+      setError('ACCESS DENIED — Invalid passcode');
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      setPasscode('');
+    }
+  };
+
+  const closeModal = () => {
+    setShowPasscodeModal(false);
+    setPasscode('');
+    setError('');
+  };
+
+  return { passcode, setPasscode, error, shake, verifyPasscode, closeModal };
+}
+</file>
+
+<file path="src/lib/supabase.ts">
+// LocalStorage Persistence Layer (Bypassing Supabase)
+export const supabase = {
+  from: (table: string) => ({
+    select: () => ({
+      order: () => ({
+        data: JSON.parse(localStorage.getItem(table) || '[]'),
+        error: null
+      }),
+      data: JSON.parse(localStorage.getItem(table) || '[]'),
+      error: null
+    }),
+    insert: async (newData: any) => {
+      const existingData = JSON.parse(localStorage.getItem(table) || '[]');
+      const updatedData = [...existingData, ...newData];
+      localStorage.setItem(table, JSON.stringify(updatedData));
+      return { data: newData, error: null };
+    },
+    upsert: async (newData: any) => {
+      localStorage.setItem(table, JSON.stringify(newData));
+      return { data: newData, error: null };
+    },
+    delete: () => ({
+      eq: () => {
+        localStorage.removeItem(table);
+        return { error: null };
+      }
+    })
+  }),
+  auth: {
+    getUser: () => ({ data: { user: { id: 'master_aatif' } }, error: null }),
+    signOut: () => null
+  }
+};
+</file>
+
+<file path="src/lib/types.ts">
+export type NeonColor = 'cyan' | 'blue' | 'red' | 'green' | 'orange';
+
+export interface Profile {
+  id: string;
+  user_id: string;
+  name: string;
+  avatar_url: string;
+  level: number;
+  xp: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  user_id: string;
+  session_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  created_at: string;
+}
+
+export interface Protocol {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  level: number;
+  progress: number;
+  status: 'active' | 'completed' | 'paused';
+  color: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProtocolTask {
+  id: string;
+  protocol_id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  completed_at: string | null;
+  order_index: number;
+  created_at: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  user_id: string;
+  action: string;
+  module: string;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface SavedFile {
+  id: string;
+  user_id: string;
+  filename: string;
+  language: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Lesson {
+  id: string;
+  user_id: string;
+  title: string;
+  subject: 'english' | 'maths' | 'urdu' | 'science' | 'other';
+  content: string;
+  grade_level: string;
+  language: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuizQuestion {
+  id: string;
+  lesson_id: string;
+  user_id: string;
+  question: string;
+  options: string[];
+  correct_answer: string;
+  explanation: string;
+  created_at: string;
+}
+
+export interface AppSettings {
+  id: string;
+  user_id: string;
+  theme_color: string;
+  neon_color: NeonColor;
+  notifications_enabled: boolean;
+  sound_enabled: boolean;
+  auto_save: boolean;
+  language: string;
+  ai_model: string;
+  settings_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+</file>
+
+<file path="src/pages/ChatPage.tsx">
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Send, Bot, User, Trash2, Mic, Copy, Check } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+
+// --- Types ---
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
+const DEMO_RESPONSES = [
+  "I am AF OMNIVERSE Neural AI. How can I assist you, Master Aatif?",
+  "Processing your request... Analysis complete.",
+  "System synchronized. Protocols are ready for execution.",
+];
+
+// --- Sub Components ---
+function TypingIndicator({ color }: { color: string }) {
+  return (
+    <div className="flex items-center gap-1 px-4 py-3">
+      {[0, 1, 2].map(i => (
+        <motion.div key={i} className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}
+          animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// --- Main Chat Page Component ---
+export function ChatPage() {
+  const { themeColor } = useApp();
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      role: 'assistant',
+      content: 'Neural AI initialized. All systems online.',
+      timestamp: new Date(),
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // 1. Dashboard se aane wala message handle karne ka logic
+  
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
+
+  const send = () => {
+    if (!input.trim()) return;
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date() };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setIsTyping(true);
+    setTimeout(() => {
+      const response = DEMO_RESPONSES[Math.floor(Math.random() * DEMO_RESPONSES.length)];
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: response, timestamp: new Date() }]);
+      setIsTyping(false);
+    }, 1500);
+  };
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-black">
+      {/* Header */}
+      <div className="p-4 border-b border-white/10 flex justify-between items-center">
+        <h1 className="text-white font-bold">Neural Chat</h1>
+        <button onClick={() => setMessages([])} className="text-gray-500 hover:text-red-400"><Trash2 size={18}/></button>
+      </div>
+
+      {/* Messages View */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map(msg => (
+          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[80%] p-3 rounded-2xl ${msg.role === 'user' ? 'bg-cyan-600' : 'bg-white/10'} text-white text-sm`}>
+              {msg.content}
+            </div>
+          </div>
+        ))}
+        {isTyping && <TypingIndicator color={themeColor} />}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input Area */}
+      <div className="p-4 border-t border-white/10">
+        <div className="flex gap-2 p-2 bg-white/5 rounded-2xl border border-white/10">
+          <input 
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && send()}
+            placeholder="Type a message..."
+            className="flex-1 bg-transparent text-white outline-none px-2"
+          />
+          <button onClick={send} className="p-2 bg-cyan-500 rounded-xl text-white"><Send size={18}/></button>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/pages/CodeLabPage.tsx">
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Code2, Play, Plus, X, FileCode, Save, Copy, Check } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+
+interface CodeFile {
+  id: string;
+  name: string;
+  language: string;
+  content: string;
+}
+
+const langColors: Record<string, string> = {
+  html: '#ff6b35',
+  css: '#3b82f6',
+  javascript: '#f59e0b',
+  python: '#10b981',
+  typescript: '#06b6d4',
+};
+
+const langKeywords: Record<string, string[]> = {
+  html: ['<!DOCTYPE', 'html', 'head', 'body', 'div', 'span', 'class', 'id', 'href', 'src'],
+  css: ['color', 'background', 'margin', 'padding', 'display', 'flex', 'grid', 'width', 'height', 'border'],
+  javascript: ['const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'import', 'export', 'class'],
+  python: ['def', 'class', 'import', 'from', 'return', 'if', 'elif', 'else', 'for', 'while', 'print', 'True', 'False'],
+  typescript: ['const', 'let', 'interface', 'type', 'function', 'return', 'import', 'export', 'class', 'extends'],
+};
+
+const initFiles: CodeFile[] = [
+  {
+    id: '1', name: 'index.html', language: 'html',
+    content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AF OMNIVERSE</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>AF OMNIVERSE</h1>
+    <p>Master Aatif's Digital Universe</p>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>`,
+  },
+  {
+    id: '2', name: 'app.py', language: 'python',
+    content: `# AF OMNIVERSE - AI Module
+class NeuralAI:
+    def __init__(self, name="AF Neural"):
+        self.name = name
+        self.memory = []
+
+    def process(self, query):
+        self.memory.append(query)
+        return f"Processing: {query}"
+
+    def get_memory(self):
+        return self.memory
+
+ai = NeuralAI()
+print(ai.process("Initialize system"))`,
+  },
+];
+
+function highlightCode(code: string, lang: string): string {
+  const keywords = langKeywords[lang] || [];
+  let result = code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  const color = langColors[lang] || '#00d4ff';
+
+  keywords.forEach(kw => {
+    const re = new RegExp(`\\b${kw}\\b`, 'g');
+    result = result.replace(re, `<span style="color:${color};font-weight:600">${kw}</span>`);
+  });
+
+  result = result.replace(/"([^"]*)"/g, '<span style="color:#86efac">"$1"</span>');
+  result = result.replace(/'([^']*)'/g, "<span style=\"color:#86efac\">'$1'</span>");
+  result = result.replace(/#.*/g, '<span style="color:#94a3b8;font-style:italic">$&</span>');
+
+  return result;
+}
+
+export function CodeLabPage() {
+  const { themeColor } = useApp();
+  const [files, setFiles] = useState<CodeFile[]>(initFiles);
+  const [activeFile, setActiveFile] = useState<string>('1');
+  const [mode, setMode] = useState<'edit' | 'preview'>('edit');
+  const [output, setOutput] = useState<string>('');
+  const [copied, setCopied] = useState(false);
+
+  const current = files.find(f => f.id === activeFile);
+
+  const updateContent = (content: string) => {
+    setFiles(prev => prev.map(f => f.id === activeFile ? { ...f, content } : f));
+  };
+
+  const newFile = () => {
+    const id = Date.now().toString();
+    setFiles(prev => [...prev, { id, name: `file_${prev.length + 1}.js`, language: 'javascript', content: '// New file\n' }]);
+    setActiveFile(id);
+  };
+
+  const closeFile = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const rest = files.filter(f => f.id !== id);
+    setFiles(rest);
+    if (activeFile === id && rest.length > 0) setActiveFile(rest[0].id);
+  };
+
+  const runCode = () => {
+    if (!current) return;
+    setOutput(`[${new Date().toLocaleTimeString()}] Running ${current.name}...\n> Language: ${current.language.toUpperCase()}\n> Lines: ${current.content.split('\n').length}\n> Status: Executed successfully\n\nOutput:\n${current.language === 'python' ? '>>> Initialize system\n>>> Processing: Initialize system' : '> Script loaded. Check browser console.'}`);
+  };
+
+  const copy = () => {
+    if (current) {
+      navigator.clipboard.writeText(current.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-56px)]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <div>
+          <h1 className="text-base font-bold text-white">Code Lab</h1>
+          <p className="text-xs text-gray-400 font-mono">DEVELOPER IDE</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={copy}
+            className="p-2 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+            title="Copy code"
+          >
+            {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+          </button>
+          <button
+            onClick={() => {}}
+            className="p-2 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+            title="Save"
+          >
+            <Save size={16} />
+          </button>
+          <motion.button
+            onClick={runCode}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium text-white"
+            style={{ background: `${themeColor}cc` }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Play size={14} />
+            Run
+          </motion.button>
+        </div>
+      </div>
+
+      <div className="flex overflow-x-auto border-b border-white/10 bg-black/20">
+        {files.map(file => {
+          const color = langColors[file.language] || themeColor;
+          return (
+            <div
+              key={file.id}
+              onClick={() => setActiveFile(file.id)}
+              className={`flex items-center gap-2 px-3 py-2 cursor-pointer border-r border-white/10 min-w-0 flex-shrink-0 transition-all ${
+                activeFile === file.id ? 'bg-white/10' : 'hover:bg-white/5'
+              }`}
+              style={activeFile === file.id ? { borderBottom: `2px solid ${color}` } : { borderBottom: '2px solid transparent' }}
+            >
+              <FileCode size={12} style={{ color }} />
+              <span className="text-xs text-gray-300 whitespace-nowrap">{file.name}</span>
+              <button onClick={e => closeFile(file.id, e)} className="text-gray-500 hover:text-gray-300 transition-colors ml-0.5">
+                <X size={11} />
+              </button>
+            </div>
+          );
+        })}
+        <button
+          onClick={newFile}
+          className="px-3 py-2 text-gray-500 hover:text-white hover:bg-white/5 transition-colors flex-shrink-0"
+        >
+          <Plus size={14} />
+        </button>
+      </div>
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {current ? (
+          <>
+            <div className="flex gap-2 px-3 py-2 border-b border-white/10 text-xs">
+              {['edit', 'preview'].map(m => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m as 'edit' | 'preview')}
+                  className={`px-3 py-1 rounded-lg capitalize transition-all ${mode === m ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+                  style={mode === m ? { background: `${themeColor}33`, border: `1px solid ${themeColor}44` } : {}}
+                >
+                  {m}
+                </button>
+              ))}
+              <div className="ml-auto flex items-center gap-2">
+                <Code2 size={12} style={{ color: langColors[current.language] || themeColor }} />
+                <span className="text-gray-400 uppercase">{current.language}</span>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-auto relative">
+              {mode === 'edit' ? (
+                <div className="h-full flex">
+                  <div className="select-none text-right pr-3 pt-4 text-gray-600 font-mono text-xs leading-6 min-w-[3rem] border-r border-white/5">
+                    {current.content.split('\n').map((_, i) => (
+                      <div key={i}>{i + 1}</div>
+                    ))}
+                  </div>
+                  <textarea
+                    value={current.content}
+                    onChange={e => updateContent(e.target.value)}
+                    spellCheck={false}
+                    className="flex-1 bg-transparent text-gray-200 font-mono text-xs leading-6 p-4 focus:outline-none resize-none"
+                    style={{ tabSize: 2 }}
+                  />
+                </div>
+              ) : (
+                <div className="h-full p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+                    <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                    <span className="text-xs text-gray-500 font-mono ml-2">{current.name}</span>
+                  </div>
+                  <pre
+                    className="text-xs leading-6 font-mono"
+                    dangerouslySetInnerHTML={{ __html: highlightCode(current.content, current.language) }}
+                  />
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-500">
+            <div className="text-center">
+              <Code2 size={40} className="mx-auto mb-3 opacity-30" />
+              <p className="text-sm">No file open</p>
+              <button onClick={newFile} className="mt-2 text-xs underline" style={{ color: themeColor }}>Create new file</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {output && (
+        <div className="border-t border-white/10 bg-black/40 max-h-36 overflow-y-auto">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
+            <span className="text-xs font-mono text-gray-400">TERMINAL OUTPUT</span>
+            <button onClick={() => setOutput('')} className="text-gray-500 hover:text-white"><X size={12} /></button>
+          </div>
+          <pre className="p-3 text-xs text-green-400 font-mono">{output}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="src/pages/Dashboard.tsx">
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  MessageSquare, Zap, Code2, GraduationCap, Activity,
+  Clock, Calendar, Wifi, ChevronDown, User, Bot, Send, TrendingUp, MemoryStick
+} from 'lucide-react';
+import { useApp } from '../context/AppContext';
+
+// --- Sub-Components ---
+function MetricCircle({ value, max, label, color }: { value: number; max: number; label: string; color: string }) {
+  const pct = Math.min(value / max, 1);
+  const r = 28;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - pct);
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="relative w-16 h-16">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 72 72">
+          <circle cx="36" cy="36" r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="5" />
+          <motion.circle
+            cx="36" cy="36" r={r} fill="none"
+            stroke={color} strokeWidth="5"
+            strokeLinecap="round"
+            strokeDasharray={circ}
+            initial={{ strokeDashoffset: circ }}
+            animate={{ strokeDashoffset: offset }}
+            transition={{ duration: 1.5, ease: 'easeOut' }}
+            style={{ filter: `drop-shadow(0 0 4px ${color})` }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xs font-bold text-white">{value}%</span>
+        </div>
+      </div>
+      <span className="text-[10px] text-gray-400 font-mono">{label}</span>
+    </div>
+  );
+}
+
+function LiveClock() {
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const timeStr = time.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+  const dateStr = time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  return (
+    <div className="flex flex-col items-center justify-center text-center py-10">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-7xl font-bold font-mono text-white tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+      >
+        {timeStr}
+      </motion.div>
+      <div className="flex items-center gap-1.5 mt-2 text-cyan-400/80 text-sm font-mono tracking-widest uppercase">
+        <Calendar size={14} />
+        <span>{dateStr}</span>
+      </div>
+    </div>
+  );
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.05, duration: 0.4 }
+  })
+};
+
+// --- Main Dashboard Component ---
+export function Dashboard() {
+  const { themeColor, setActivePage } = useApp();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [userInput, setUserInput] = useState('');
+  
+  // Chat States
+  const [isChatting, setIsChatting] = useState(false);
+  const [messages, setMessages] = useState<{role: 'user' | 'bot', text: string}[]>([]);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleDashSend = () => {
+    if (!userInput.trim()) return;
+
+    setIsChatting(true);
+    const newMsgs = [...messages, { role: 'user' as const, text: userInput }];
+    setMessages(newMsgs);
+    const currentInput = userInput;
+    setUserInput('');
+
+    // AI Response Simulation
+    setTimeout(() => {
+      setMessages([...newMsgs, { 
+        role: 'bot', 
+        text: `Master Aatif, AF Infinity system has acknowledged: "${currentInput}".` 
+      }]);
+    }, 1000);
+  };
+
+  const quickActions = [
+    { icon: MessageSquare, label: 'Chat', page: 'chat', color: '#00d4ff' },
+    { icon: Zap, label: 'Protocols', page: 'training', color: '#00ff88' },
+    { icon: Code2, label: 'Code Lab', page: 'codelab', color: '#ff8800' },
+    { icon: GraduationCap, label: 'Educator', page: 'educator', color: '#ff3366' },
+    { icon: Activity, label: 'Monitor', page: 'monitor', color: '#a855f7' },
+    { icon: Wifi, label: 'Breach', page: 'breach', color: '#ff0000' },
+  ];
+
+  return (
+    <div className="h-screen overflow-y-auto no-scrollbar snap-y snap-mandatory bg-black">
+      
+     {/* SECTION 1: CHAT / CLOCK VIEW */}
+<section className="relative h-screen w-full flex flex-col justify-between p-6 snap-start overflow-hidden">
+  
+  {/* Top Space (Header ke liye) */}
+  <div className="h-16" />
+
+  {/* Middle Content: Clock ya Chat */}
+  <div className="flex-1 flex flex-col min-h-0"> {/* min-h-0 scroll ke liye zaroori hai */}
+    <AnimatePresence mode="wait">
+      {!isChatting ? (
+        <motion.div key="clock" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex items-center justify-center">
+          <LiveClock />
+        </motion.div>
+      ) : (
+        <motion.div 
+          key="chat"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          /* Chat container ki height ko humne fix kar diya hai */
+          className="flex-1 overflow-y-auto no-scrollbar space-y-4 pb-20 pt-4"
+        >
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] p-3 rounded-2xl text-sm font-mono ${
+                msg.role === 'user' ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-100' : 'bg-white/5 border border-white/10 text-gray-200'
+              }`}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+          <div ref={chatEndRef} />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+
+  {/* Bottom Controls: Input aur Dashboard Label */}
+  <div className="w-full space-y-4 pb-4 bg-black/80 backdrop-blur-md">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative group">
+      <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-2xl blur opacity-20"></div>
+      <div className="relative bg-black/60 border border-white/10 backdrop-blur-xl rounded-2xl p-1 flex items-center">
+        <input 
+          type="text" 
+          value={userInput}
+          onChange={(e) => setUserInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleDashSend()}
+          placeholder="Ask AF Infinity..."
+          className="bg-transparent w-full p-4 text-white outline-none font-mono text-sm"
+        />
+        <button onClick={handleDashSend} className="p-3 text-cyan-400 hover:scale-110 transition-transform">
+          <Zap size={20} />
+        </button>
+      </div>
+    </motion.div>
+    
+    {/* Ye hissa ab chat ke dabao mein nahi aayega */}
+    <div className="flex flex-col items-center text-gray-600 py-2">
+      <span className="text-[9px] font-mono tracking-[0.2em] uppercase opacity-50">SYSTEM_DASHBOARD</span>
+      <ChevronDown size={14} className="animate-bounce mt-1 opacity-50" />
+    </div>
+  </div>
+</section>
+
+
+      {/* SECTION 2: COMMAND CENTER TILES */}
+      <section className="min-h-screen p-4 space-y-4 snap-start bg-black">
+        <div className="grid grid-cols-2 gap-3 pt-10">
+           {/* Metric Card */}
+           <div className="col-span-2 p-4 rounded-2xl border border-white/10 bg-white/5">
+              <div className="flex justify-around">
+                <MetricCircle value={42} max={100} label="CPU" color={themeColor} />
+                <MetricCircle value={68} max={100} label="RAM" color="#00ff88" />
+              </div>
+           </div>
+           
+           {/* Level Card */}
+           <div className="p-4 rounded-2xl border border-white/10 bg-white/5 h-32 flex flex-col justify-between">
+              <TrendingUp size={14} className="text-purple-500" />
+              <div><span className="text-2xl font-bold text-white">07</span><p className="text-[10px] text-gray-400">LEVEL</p></div>
+           </div>
+
+           {/* Storage Card */}
+           <div className="p-4 rounded-2xl border border-white/10 bg-white/5 h-32 flex flex-col justify-between">
+              <MemoryStick size={14} className="text-orange-400" />
+              <div><span className="text-lg font-bold text-white">14.2 GB</span><p className="text-[10px] text-gray-400">STORAGE</p></div>
+           </div>
+
+           {/* Quick Access */}
+           <div className="col-span-2 p-4 rounded-2xl border border-white/10 bg-white/5">
+              <span className="text-[10px] font-mono text-gray-500 mb-3 block uppercase">Quick Access</span>
+              <div className="grid grid-cols-3 gap-2">
+                {quickActions.map((item) => (
+                  <button key={item.page} onClick={() => setActivePage(item.page)} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/5">
+                    <item.icon size={18} style={{ color: item.color }} />
+                    <span className="text-[9px] text-gray-400 font-mono">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+           </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+</file>
+
+<file path="src/pages/EducatorPage.tsx">
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GraduationCap, BookOpen, FileQuestion, Plus, Sparkles, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { Badge } from '../components/ui/Badge';
+
+interface Lesson {
+  id: string;
+  title: string;
+  subject: string;
+  grade: string;
+  content: string;
+  language: string;
+}
+
+interface Quiz {
+  id: string;
+  question: string;
+  options: string[];
+  answer: string;
+}
+
+const sampleLessons: Lesson[] = [
+  {
+    id: '1', title: 'Parts of Speech', subject: 'english', grade: '5',
+    language: 'urdu', content: 'Parts of Speech yani kalam ke ajza wo buniyadi hisse hain jisme noun, pronoun, verb, adjective, adverb, preposition, conjunction aur interjection shamil hain. Har lafz apni ek khas qism rakhta hai jo sentence mein us ki jagah aur kaam bataata hai.',
+  },
+  {
+    id: '2', title: 'Fractions Introduction', subject: 'maths', grade: '4',
+    language: 'urdu', content: 'Fraction (kesra) ek pure ka hissa hota hai. Misal ke taur par, agar ek roti ko 4 barabar hisson mein kaata jaye to har hissa 1/4 hoga. Upar wala adad numerator (maqsoom) aur neeche wala denominator (maqsoom alayh) kehlata hai.',
+  },
+];
+
+const sampleQuizzes: Quiz[] = [
+  { id: 'q1', question: 'Which is a noun?', options: ['run', 'happy', 'book', 'quickly'], answer: 'book' },
+  { id: 'q2', question: 'What is 1/2 + 1/4?', options: ['2/4', '3/4', '1/4', '2/6'], answer: '3/4' },
+];
+
+const subjects = ['english', 'maths', 'urdu', 'science', 'other'];
+const subjectColors: Record<string, string> = {
+  english: '#00d4ff', maths: '#00ff88', urdu: '#ff8800', science: '#a855f7', other: '#ff3366',
+};
+
+export function EducatorPage() {
+  const { themeColor } = useApp();
+  const [lessons, setLessons] = useState<Lesson[]>(sampleLessons);
+  const [quizzes, setQuizzes] = useState<Quiz[]>(sampleQuizzes);
+  const [tab, setTab] = useState<'lessons' | 'quiz'>('lessons');
+  const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
+  const [showGenForm, setShowGenForm] = useState(false);
+  const [form, setForm] = useState({ title: '', subject: 'english', grade: '4', language: 'urdu' });
+  const [generating, setGenerating] = useState(false);
+  const [quizAns, setQuizAns] = useState<Record<string, string>>({});
+
+  const generateLesson = () => {
+    if (!form.title) return;
+    setGenerating(true);
+    setTimeout(() => {
+      const lesson: Lesson = {
+        id: Date.now().toString(),
+        ...form,
+        content: `${form.title} — yeh aik aham sabaq hai jo ${form.subject === 'urdu' ? 'Urdu' : form.subject.charAt(0).toUpperCase() + form.subject.slice(1)} ki class ${form.grade} ke liye tayyar kiya gaya hai. Is sabaq mein talba ko buniyadi mafhumat se agah kiya jata hai. Asatiza is content ko apni zaroorat ke mutabiq customize kar sakte hain.`,
+      };
+      setLessons(prev => [lesson, ...prev]);
+      setGenerating(false);
+      setShowGenForm(false);
+      setForm({ title: '', subject: 'english', grade: '4', language: 'urdu' });
+    }, 1500);
+  };
+
+  const generateQuiz = () => {
+    const newQ: Quiz = {
+      id: Date.now().toString(),
+      question: 'What is the main idea of the last lesson?',
+      options: ['Option A', 'Option B', 'Option C', 'Option D'],
+      answer: 'Option B',
+    };
+    setQuizzes(prev => [...prev, newQ]);
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-xl font-bold text-white">Educator's Vault</h1>
+        <p className="text-xs text-gray-400 font-mono mt-0.5">AI-POWERED TEACHING TOOLS</p>
+      </motion.div>
+
+      <div className="flex gap-2 p-1 glass-panel rounded-xl border border-white/10">
+        {[{ id: 'lessons', label: 'Lesson Generator', icon: BookOpen }, { id: 'quiz', label: 'Quiz Maker', icon: FileQuestion }].map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id as typeof tab)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${tab === t.id ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+            style={tab === t.id ? { background: `${themeColor}33`, border: `1px solid ${themeColor}44` } : {}}
+          >
+            <t.icon size={14} />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        {tab === 'lessons' && (
+          <motion.div key="lessons" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-3">
+            <motion.button
+              onClick={() => setShowGenForm(!showGenForm)}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-white/20 text-sm text-gray-400 hover:text-white hover:border-white/40 transition-all"
+              whileHover={{ scale: 1.01 }}
+            >
+              <Sparkles size={16} style={{ color: themeColor }} />
+              Generate New Lesson with AI
+            </motion.button>
+
+            <AnimatePresence>
+              {showGenForm && (
+                <motion.div
+                  className="glass-panel rounded-2xl border border-white/10 p-4 space-y-3"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                      <label className="text-xs text-gray-400 mb-1 block font-mono">LESSON TITLE</label>
+                      <input
+                        value={form.title}
+                        onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+                        placeholder="e.g., Adjectives & Adverbs"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block font-mono">SUBJECT</label>
+                      <select
+                        value={form.subject}
+                        onChange={e => setForm(p => ({ ...p, subject: e.target.value }))}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none"
+                      >
+                        {subjects.map(s => <option key={s} value={s} className="bg-gray-900">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block font-mono">GRADE LEVEL</label>
+                      <select
+                        value={form.grade}
+                        onChange={e => setForm(p => ({ ...p, grade: e.target.value }))}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none"
+                      >
+                        {['1','2','3','4','5','6','7','8'].map(g => <option key={g} value={g} className="bg-gray-900">Grade {g}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <button
+                    onClick={generateLesson}
+                    disabled={generating || !form.title}
+                    className="w-full py-2.5 rounded-xl text-sm font-medium text-white flex items-center justify-center gap-2 transition-all"
+                    style={{ background: `${themeColor}cc`, opacity: generating ? 0.7 : 1 }}
+                  >
+                    {generating ? (
+                      <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating...</>
+                    ) : (
+                      <><Sparkles size={14} /> Generate Lesson</>
+                    )}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {lessons.map((lesson, i) => (
+              <motion.div
+                key={lesson.id}
+                className="glass-panel rounded-2xl border border-white/10 overflow-hidden"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07 }}
+              >
+                <div className="p-4 cursor-pointer" onClick={() => setExpandedLesson(expandedLesson === lesson.id ? null : lesson.id)}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${subjectColors[lesson.subject]}22` }}>
+                        <GraduationCap size={14} style={{ color: subjectColors[lesson.subject] }} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white text-sm">{lesson.title}</p>
+                        <div className="flex gap-2 mt-0.5">
+                          <Badge color={subjectColors[lesson.subject]}>{lesson.subject}</Badge>
+                          <Badge color="#666">Grade {lesson.grade}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                    {expandedLesson === lesson.id ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+                  </div>
+                </div>
+                <AnimatePresence>
+                  {expandedLesson === lesson.id && (
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: 'auto' }}
+                      exit={{ height: 0 }}
+                      className="overflow-hidden border-t border-white/10"
+                    >
+                      <div className="p-4">
+                        <p className="text-sm text-gray-300 leading-relaxed" dir={lesson.language === 'urdu' ? 'rtl' : 'ltr'}>{lesson.content}</p>
+                        <div className="flex justify-end mt-3">
+                          <button onClick={() => setLessons(p => p.filter(l => l.id !== lesson.id))} className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition-colors">
+                            <Trash2 size={12} /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+
+        {tab === 'quiz' && (
+          <motion.div key="quiz" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
+            <motion.button
+              onClick={generateQuiz}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm text-white font-medium transition-all"
+              style={{ background: `${themeColor}22`, border: `1px solid ${themeColor}44` }}
+              whileHover={{ scale: 1.01 }}
+            >
+              <Plus size={16} />
+              Generate Quiz Question
+            </motion.button>
+
+            {quizzes.map((q, i) => (
+              <motion.div
+                key={q.id}
+                className="glass-panel rounded-2xl border border-white/10 p-4 space-y-3"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07 }}
+              >
+                <div className="flex items-start gap-2">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-lg font-mono" style={{ background: `${themeColor}22`, color: themeColor }}>Q{i + 1}</span>
+                  <p className="text-sm text-white font-medium flex-1">{q.question}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {q.options.map((opt, oi) => {
+                    const selected = quizAns[q.id] === opt;
+                    const correct = opt === q.answer;
+                    const revealed = !!quizAns[q.id];
+                    return (
+                      <motion.button
+                        key={oi}
+                        onClick={() => !revealed && setQuizAns(p => ({ ...p, [q.id]: opt }))}
+                        className="text-left p-2.5 rounded-xl text-sm border transition-all"
+                        style={{
+                          borderColor: revealed ? (correct ? '#00ff88' : selected ? '#ff3366' : 'rgba(255,255,255,0.1)') : 'rgba(255,255,255,0.1)',
+                          background: revealed ? (correct ? '#00ff8822' : selected ? '#ff336622' : 'rgba(255,255,255,0.03)') : 'rgba(255,255,255,0.03)',
+                          color: revealed && correct ? '#00ff88' : 'white',
+                        }}
+                        whileHover={!revealed ? { scale: 1.02 } : {}}
+                      >
+                        {opt}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+                {quizAns[q.id] && (
+                  <p className="text-xs font-mono" style={{ color: quizAns[q.id] === q.answer ? '#00ff88' : '#ff3366' }}>
+                    {quizAns[q.id] === q.answer ? '✓ CORRECT!' : `✗ INCORRECT — Answer: ${q.answer}`}
+                  </p>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+</file>
+
+<file path="src/pages/MonitorPage.tsx">
+import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { Activity, Cpu, MemoryStick, HardDrive, Wifi, Clock, Trash2 } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { ProgressBar } from '../components/ui/ProgressBar';
+
+interface Process {
+  pid: string;
+  name: string;
+  cpu: number;
+  mem: number;
+  status: 'running' | 'sleeping' | 'idle';
+}
+
+interface LogEntry {
+  id: string;
+  time: string;
+  module: string;
+  action: string;
+  level: 'info' | 'warn' | 'error';
+}
+
+const initProcesses: Process[] = [
+  { pid: '1001', name: 'AF-NeuralCore', cpu: 12.4, mem: 34.2, status: 'running' },
+  { pid: '1002', name: 'AF-ChatEngine', cpu: 8.1, mem: 18.6, status: 'running' },
+  { pid: '1003', name: 'AF-TrainingSync', cpu: 2.3, mem: 6.8, status: 'sleeping' },
+  { pid: '1004', name: 'AF-CodeCompiler', cpu: 0.5, mem: 12.1, status: 'idle' },
+  { pid: '1005', name: 'AF-DataVault', cpu: 1.8, mem: 22.4, status: 'running' },
+];
+
+const initLogs: LogEntry[] = [
+  { id: 'l1', time: '10:42:01', module: 'NEURAL_CHAT', action: 'Session initialized', level: 'info' },
+  { id: 'l2', time: '10:41:55', module: 'CODE_LAB', action: 'File compiled successfully', level: 'info' },
+  { id: 'l3', time: '10:41:30', module: 'TRAINING', action: 'Protocol checkpoint saved', level: 'info' },
+  { id: 'l4', time: '10:40:12', module: 'AUTH', action: 'Admin access attempted', level: 'warn' },
+  { id: 'l5', time: '10:39:44', module: 'SYSTEM', action: 'Memory optimization triggered', level: 'info' },
+  { id: 'l6', time: '10:38:20', module: 'SYNC', action: 'Cloud sync timeout — retrying', level: 'warn' },
+  { id: 'l7', time: '10:37:05', module: 'DATABASE', action: 'Query executed (45ms)', level: 'info' },
+  { id: 'l8', time: '10:36:01', module: 'SYSTEM', action: 'Boot sequence complete', level: 'info' },
+];
+
+const statusColor: Record<string, string> = {
+  running: '#00ff88',
+  sleeping: '#ff8800',
+  idle: '#666',
+};
+
+const levelColor: Record<string, string> = {
+  info: '#00d4ff',
+  warn: '#ff8800',
+  error: '#ff3366',
+};
+
+function useRandomMetrics(base: number, range: number) {
+  const [val, setVal] = useState(base);
+  useEffect(() => {
+    const t = setInterval(() => setVal(Math.min(100, Math.max(0, base + (Math.random() - 0.5) * range * 2))), 2000);
+    return () => clearInterval(t);
+  }, [base, range]);
+  return Math.round(val);
+}
+
+export function MonitorPage() {
+  const { themeColor } = useApp();
+  const [processes, setProcesses] = useState<Process[]>(initProcesses);
+  const [logs, setLogs] = useState<LogEntry[]>(initLogs);
+  const [tab, setTab] = useState<'processes' | 'logs'>('processes');
+
+  const cpu = useRandomMetrics(42, 15);
+  const ram = useRandomMetrics(68, 10);
+  const net = useRandomMetrics(24, 30);
+
+  const addLog = useCallback(() => {
+    const actions = ['Request processed', 'Cache updated', 'Health check passed', 'Data synced', 'Task queued'];
+    const modules = ['NEURAL_CHAT', 'SYSTEM', 'DATABASE', 'TRAINING', 'CODE_LAB'];
+    const newLog: LogEntry = {
+      id: Date.now().toString(),
+      time: new Date().toLocaleTimeString('en-US', { hour12: false }),
+      module: modules[Math.floor(Math.random() * modules.length)],
+      action: actions[Math.floor(Math.random() * actions.length)],
+      level: Math.random() > 0.85 ? 'warn' : 'info',
+    };
+    setLogs(prev => [newLog, ...prev.slice(0, 49)]);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(addLog, 5000);
+    return () => clearInterval(t);
+  }, [addLog]);
+
+  const killProcess = (pid: string) => {
+    setProcesses(prev => prev.filter(p => p.pid !== pid));
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-xl font-bold text-white">System Monitor</h1>
+        <p className="text-xs text-gray-400 font-mono mt-0.5">REAL-TIME DIAGNOSTICS</p>
+      </motion.div>
+
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { icon: Cpu, label: 'CPU', value: cpu, color: themeColor },
+          { icon: MemoryStick, label: 'RAM', value: ram, color: '#00ff88' },
+          { icon: Wifi, label: 'NET ms', value: net, color: '#ff8800', noPercent: true },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            className="glass-panel rounded-2xl border border-white/10 p-3"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.08 }}
+          >
+            <div className="flex items-center gap-1.5 mb-2">
+              <stat.icon size={12} style={{ color: stat.color }} />
+              <span className="text-[10px] font-mono text-gray-400">{stat.label}</span>
+            </div>
+            <div className="text-xl font-bold" style={{ color: stat.color }}>
+              {stat.value}{stat.noPercent ? '' : '%'}
+            </div>
+            {!stat.noPercent && <ProgressBar value={stat.value} color={stat.color} height={3} />}
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="glass-panel rounded-2xl border border-white/10 p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <HardDrive size={12} style={{ color: themeColor }} />
+          <span className="text-xs font-mono text-gray-400">STORAGE</span>
+          <span className="ml-auto text-xs text-gray-400">14.2 / 32 GB</span>
+        </div>
+        <ProgressBar value={44} color={themeColor} height={5} />
+      </div>
+
+      <div className="flex gap-2 p-1 glass-panel rounded-xl border border-white/10">
+        {[{ id: 'processes', label: 'Processes', icon: Activity }, { id: 'logs', label: 'Activity Logs', icon: Clock }].map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id as typeof tab)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${tab === t.id ? 'text-white' : 'text-gray-400'}`}
+            style={tab === t.id ? { background: `${themeColor}33`, border: `1px solid ${themeColor}44` } : {}}
+          >
+            <t.icon size={14} />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'processes' && (
+        <div className="space-y-2">
+          {processes.map((proc, i) => (
+            <motion.div
+              key={proc.pid}
+              className="glass-panel rounded-xl border border-white/10 p-3 flex items-center gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor[proc.status], boxShadow: `0 0 6px ${statusColor[proc.status]}` }} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-mono text-white truncate">{proc.name}</span>
+                  <span className="text-[10px] text-gray-500 font-mono flex-shrink-0">PID:{proc.pid}</span>
+                </div>
+                <div className="flex gap-3 mt-0.5">
+                  <span className="text-[10px] text-gray-400">CPU: <span style={{ color: themeColor }}>{proc.cpu}%</span></span>
+                  <span className="text-[10px] text-gray-400">MEM: <span style={{ color: '#00ff88' }}>{proc.mem}%</span></span>
+                </div>
+              </div>
+              <button
+                onClick={() => killProcess(proc.pid)}
+                className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                title="Kill process"
+              >
+                <Trash2 size={13} />
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'logs' && (
+        <div className="space-y-1.5">
+          <div className="flex justify-end mb-2">
+            <button onClick={() => setLogs([])} className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition-colors">
+              <Trash2 size={11} /> Clear Logs
+            </button>
+          </div>
+          {logs.map((log, i) => (
+            <motion.div
+              key={log.id}
+              className="glass-panel rounded-xl border border-white/5 p-3 flex items-start gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: Math.min(i * 0.03, 0.3) }}
+            >
+              <span className="text-[10px] font-mono text-gray-500 flex-shrink-0 mt-0.5">{log.time}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded" style={{ background: `${levelColor[log.level]}22`, color: levelColor[log.level] }}>{log.level.toUpperCase()}</span>
+                  <span className="text-[10px] font-mono text-gray-500">[{log.module}]</span>
+                </div>
+                <p className="text-xs text-gray-300 mt-0.5">{log.action}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="src/pages/SettingsPage.tsx">
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Settings, User, Bell, Volume2, Save, Smartphone, Shield, Info } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { Toggle } from '../components/ui/Toggle';
+import { NeonColor } from '../lib/types';
+
+const neonOptions: { id: NeonColor; color: string; label: string }[] = [
+  { id: 'cyan', color: '#00d4ff', label: 'Cyber Cyan' },
+  { id: 'blue', color: '#0088ff', label: 'Deep Blue' },
+  { id: 'red', color: '#ff3366', label: 'Crimson Red' },
+  { id: 'green', color: '#00ff88', label: 'Matrix Green' },
+  { id: 'orange', color: '#ff8800', label: 'Solar Orange' },
+];
+
+export function SettingsPage() {
+  const { themeColor, neonColor, setNeonColor, settings, setSettings } = useApp();
+  const [name, setName] = useState('Master Aatif');
+  const [saved, setSaved] = useState(false);
+
+  const save = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const pwaSteps = [
+    'Open this app in your mobile browser',
+    'Tap the Share button (iOS) or Menu button (Android)',
+    'Select "Add to Home Screen"',
+    'Tap "Add" to confirm installation',
+  ];
+
+  return (
+    <div className="p-4 space-y-4 pb-8">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-xl font-bold text-white">Settings</h1>
+        <p className="text-xs text-gray-400 font-mono mt-0.5">SYSTEM PREFERENCES</p>
+      </motion.div>
+
+      {[
+        {
+          title: 'Profile', icon: User, delay: 0,
+          content: (
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold flex-shrink-0"
+                  style={{ background: `linear-gradient(135deg, ${themeColor}44, ${themeColor}22)`, border: `2px solid ${themeColor}66`, color: themeColor }}
+                >
+                  MA
+                </div>
+                <div className="flex-1">
+                  <input
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none"
+                    style={{ borderColor: name !== 'Master Aatif' ? `${themeColor}44` : undefined }}
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1 font-mono">Administrator</p>
+                </div>
+              </div>
+            </div>
+          )
+        },
+        {
+          title: 'Appearance', icon: Settings, delay: 0.1,
+          content: (
+            <div>
+              <p className="text-xs text-gray-400 font-mono mb-3">NEON ACCENT COLOR</p>
+              <div className="grid grid-cols-5 gap-2">
+                {neonOptions.map(opt => (
+                  <motion.button
+                    key={opt.id}
+                    onClick={() => setNeonColor(opt.id)}
+                    className="flex flex-col items-center gap-2 p-2 rounded-xl border transition-all"
+                    style={{
+                      borderColor: neonColor === opt.id ? opt.color : 'transparent',
+                      background: neonColor === opt.id ? `${opt.color}22` : 'rgba(255,255,255,0.03)',
+                    }}
+                    whileHover={{ scale: 1.06 }}
+                    whileTap={{ scale: 0.94 }}
+                  >
+                    <div
+                      className="w-7 h-7 rounded-full"
+                      style={{ background: opt.color, boxShadow: neonColor === opt.id ? `0 0 12px ${opt.color}` : 'none' }}
+                    />
+                    <span className="text-[9px] text-gray-400 font-mono truncate w-full text-center">{opt.label.split(' ')[0]}</span>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          )
+        },
+        {
+          title: 'Notifications', icon: Bell, delay: 0.15,
+          content: (
+            <div className="space-y-4">
+              <Toggle
+                checked={settings.notifications_enabled ?? true}
+                onChange={v => setSettings({ ...settings, notifications_enabled: v })}
+                label="Push Notifications"
+                description="Receive system alerts"
+              />
+              <div className="border-t border-white/5 pt-4">
+                <Toggle
+                  checked={settings.sound_enabled ?? false}
+                  onChange={v => setSettings({ ...settings, sound_enabled: v })}
+                  label="Sound Effects"
+                  description="Audio feedback on actions"
+                />
+              </div>
+            </div>
+          )
+        },
+        {
+          title: 'System', icon: Volume2, delay: 0.2,
+          content: (
+            <div className="space-y-4">
+              <Toggle
+                checked={settings.auto_save ?? true}
+                onChange={v => setSettings({ ...settings, auto_save: v })}
+                label="Auto-Save"
+                description="Automatically save changes"
+              />
+              <div className="border-t border-white/5 pt-4">
+                <label className="text-xs text-gray-400 font-mono mb-2 block">AI MODEL</label>
+                <select
+                  value={settings.ai_model ?? 'gpt-4'}
+                  onChange={e => setSettings({ ...settings, ai_model: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none"
+                >
+                  {['gpt-4', 'gpt-3.5-turbo', 'claude-3', 'gemini-pro'].map(m => (
+                    <option key={m} value={m} className="bg-gray-900">{m}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )
+        },
+        {
+          title: 'Install as App (PWA)', icon: Smartphone, delay: 0.25,
+          content: (
+            <div className="space-y-2">
+              {pwaSteps.map((step, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5"
+                    style={{ background: `${themeColor}22`, color: themeColor, border: `1px solid ${themeColor}44` }}
+                  >
+                    {i + 1}
+                  </div>
+                  <p className="text-sm text-gray-300">{step}</p>
+                </div>
+              ))}
+            </div>
+          )
+        },
+        {
+          title: 'About', icon: Info, delay: 0.3,
+          content: (
+            <div className="space-y-2">
+              {[
+                ['App', 'AF OMNIVERSE'],
+                ['Version', '1.0.0'],
+                ['Build', 'Production'],
+                ['Developer', 'Master Aatif'],
+                ['Stack', 'React · Supabase · Framer Motion'],
+              ].map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between py-1">
+                  <span className="text-xs text-gray-400 font-mono">{k}</span>
+                  <span className="text-xs text-gray-200">{v}</span>
+                </div>
+              ))}
+              <div className="pt-2 border-t border-white/10">
+                <div className="flex items-center gap-2">
+                  <Shield size={12} style={{ color: themeColor }} />
+                  <span className="text-[10px] text-gray-400 font-mono">Click header title 3x to access Master Control</span>
+                </div>
+              </div>
+            </div>
+          )
+        },
+      ].map(section => (
+        <motion.div
+          key={section.title}
+          className="glass-panel rounded-2xl border border-white/10 p-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: section.delay }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <section.icon size={14} style={{ color: themeColor }} />
+            <h2 className="text-sm font-bold text-white">{section.title}</h2>
+          </div>
+          {section.content}
+        </motion.div>
+      ))}
+
+      <motion.button
+        onClick={save}
+        className="w-full py-3 rounded-2xl font-semibold text-white flex items-center justify-center gap-2 transition-all"
+        style={{ background: `linear-gradient(135deg, ${themeColor}cc, ${themeColor}88)` }}
+        whileTap={{ scale: 0.97 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <Save size={16} />
+        {saved ? 'Saved Successfully!' : 'Save Changes'}
+      </motion.button>
+    </div>
+  );
+}
+</file>
+
+<file path="src/pages/SyncPage.tsx">
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Cloud, Download, Upload, RefreshCw, CheckCircle, Clock, HardDrive, Share2 } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+
+interface SyncItem {
+  id: string;
+  name: string;
+  size: string;
+  lastSync: string;
+  status: 'synced' | 'pending' | 'error';
+}
+
+const syncItems: SyncItem[] = [
+  { id: '1', name: 'Chat History', size: '2.4 MB', lastSync: '2 min ago', status: 'synced' },
+  { id: '2', name: 'Training Protocols', size: '0.8 MB', lastSync: '5 min ago', status: 'synced' },
+  { id: '3', name: 'Code Lab Files', size: '4.1 MB', lastSync: '1 hour ago', status: 'pending' },
+  { id: '4', name: 'Educator Vault', size: '1.2 MB', lastSync: 'Never', status: 'error' },
+  { id: '5', name: 'Settings & Prefs', size: '0.1 MB', lastSync: '10 min ago', status: 'synced' },
+];
+
+const statusConfig = {
+  synced: { color: '#00ff88', icon: CheckCircle, label: 'Synced' },
+  pending: { color: '#ff8800', icon: Clock, label: 'Pending' },
+  error: { color: '#ff3366', icon: RefreshCw, label: 'Retry' },
+};
+
+export function SyncPage() {
+  const { themeColor } = useApp();
+  const [items, setItems] = useState<SyncItem[]>(syncItems);
+  const [syncing, setSyncing] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const syncAll = () => {
+    setSyncing(true);
+    setProgress(0);
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setSyncing(false);
+          setItems(all => all.map(i => ({ ...i, status: 'synced', lastSync: 'just now' })));
+          return 100;
+        }
+        return prev + 4;
+      });
+    }, 80);
+  };
+
+  const retryItem = (id: string) => {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, status: 'synced', lastSync: 'just now' } : i));
+  };
+
+  const exportBackup = () => {
+    const data = JSON.stringify({ exported: new Date().toISOString(), version: '1.0', modules: items.map(i => i.name) }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `af-omniverse-backup-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const totalSynced = items.filter(i => i.status === 'synced').length;
+
+  return (
+    <div className="p-4 space-y-4">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-xl font-bold text-white">Cloud Sync</h1>
+        <p className="text-xs text-gray-400 font-mono mt-0.5">BACKUP & RESTORE SYSTEM</p>
+      </motion.div>
+
+      <motion.div
+        className="glass-panel rounded-2xl border border-white/10 p-5"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: `${themeColor}22`, border: `1px solid ${themeColor}44` }}>
+              <Cloud size={22} style={{ color: themeColor }} />
+            </div>
+            <div>
+              <p className="font-bold text-white">AF Cloud Storage</p>
+              <p className="text-xs text-gray-400 font-mono">{totalSynced}/{items.length} modules synced</p>
+            </div>
+          </div>
+          <motion.button
+            onClick={syncAll}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white transition-all"
+            style={{ background: `${themeColor}cc`, opacity: syncing ? 0.7 : 1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
+            {syncing ? `${progress}%` : 'Sync All'}
+          </motion.button>
+        </div>
+
+        {syncing && (
+          <div className="mb-4">
+            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: `linear-gradient(90deg, ${themeColor}88, ${themeColor})`, boxShadow: `0 0 8px ${themeColor}66` }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.2 }}
+              />
+            </div>
+            <p className="text-[10px] text-gray-400 font-mono mt-1">Synchronizing data...</p>
+          </div>
+        )}
+
+        <div className="w-full bg-white/5 rounded-xl overflow-hidden mb-3">
+          <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${themeColor}88, ${themeColor})`, width: `${(totalSynced / items.length) * 100}%` }} />
+        </div>
+        <p className="text-xs text-gray-400 font-mono">8.6 MB / 50 MB used</p>
+      </motion.div>
+
+      <div className="space-y-2">
+        {items.map((item, i) => {
+          const cfg = statusConfig[item.status];
+          return (
+            <motion.div
+              key={item.id}
+              className="glass-panel rounded-2xl border border-white/10 p-3 flex items-center gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.07 }}
+            >
+              <HardDrive size={16} className="text-gray-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white">{item.name}</p>
+                <p className="text-[10px] text-gray-500 font-mono">{item.size} · {item.lastSync}</p>
+              </div>
+              {item.status === 'error' ? (
+                <button
+                  onClick={() => retryItem(item.id)}
+                  className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-all"
+                  style={{ color: cfg.color, background: `${cfg.color}22` }}
+                >
+                  <cfg.icon size={11} />
+                  Retry
+                </button>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <cfg.icon size={14} style={{ color: cfg.color }} />
+                  <span className="text-[10px] font-mono" style={{ color: cfg.color }}>{cfg.label}</span>
+                </div>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { icon: Download, label: 'Export Backup', desc: 'Download JSON backup', action: exportBackup, color: themeColor },
+          { icon: Upload, label: 'Import Data', desc: 'Restore from backup', action: () => {}, color: '#00ff88' },
+          { icon: Share2, label: 'Share Config', desc: 'Share settings', action: () => {}, color: '#ff8800' },
+          { icon: RefreshCw, label: 'Reset & Sync', desc: 'Fresh sync all data', action: syncAll, color: '#ff3366' },
+        ].map((btn, i) => (
+          <motion.button
+            key={btn.label}
+            onClick={btn.action}
+            className="glass-panel rounded-2xl border border-white/10 p-4 text-left transition-all hover:border-white/20"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + i * 0.07 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: `${btn.color}22` }}>
+              <btn.icon size={15} style={{ color: btn.color }} />
+            </div>
+            <p className="text-sm font-semibold text-white">{btn.label}</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">{btn.desc}</p>
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/pages/TrainingPage.tsx">
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Zap, Plus, Check, ChevronDown, ChevronUp, Trash2, Star } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { Badge } from '../components/ui/Badge';
+
+interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+interface Protocol {
+  id: string;
+  title: string;
+  description: string;
+  level: number;
+  progress: number;
+  color: string;
+  status: 'active' | 'completed' | 'paused';
+  tasks: Task[];
+}
+
+const initProtocols: Protocol[] = [
+  {
+    id: '1', title: 'Goku Protocol', description: 'Ultra-instinct training — push beyond limits',
+    level: 7, progress: 72, color: '#00d4ff', status: 'active',
+    tasks: [
+      { id: 't1', title: '100 Push-ups', completed: true },
+      { id: 't2', title: '1-hour Deep Focus Study', completed: true },
+      { id: 't3', title: 'Cold shower meditation', completed: false },
+      { id: 't4', title: 'Evening coding session (2hrs)', completed: false },
+    ]
+  },
+  {
+    id: '2', title: 'Total Concentration', description: 'Breathing & mindfulness mastery protocol',
+    level: 5, progress: 48, color: '#00ff88', status: 'active',
+    tasks: [
+      { id: 't5', title: '30-min breathing exercise', completed: true },
+      { id: 't6', title: 'Journaling (500 words)', completed: false },
+      { id: 't7', title: 'No-screen hour', completed: false },
+    ]
+  },
+  {
+    id: '3', title: 'Code Mastery', description: 'Full-stack development excellence',
+    level: 9, progress: 91, color: '#ff8800', status: 'completed',
+    tasks: [
+      { id: 't8', title: 'Complete 3 LeetCode problems', completed: true },
+      { id: 't9', title: 'Build one mini project', completed: true },
+      { id: 't10', title: 'Review 50 lines of open-source code', completed: true },
+    ]
+  },
+];
+
+const levelBadges = ['Initiate', 'Apprentice', 'Adept', 'Expert', 'Master', 'Grand Master', 'Legend', 'Mythic', 'Divine', 'Omniversal'];
+
+export function TrainingPage() {
+  const { themeColor } = useApp();
+  const [protocols, setProtocols] = useState<Protocol[]>(initProtocols);
+  const [expanded, setExpanded] = useState<string | null>('1');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+
+  const toggleTask = (pId: string, tId: string) => {
+    setProtocols(prev => prev.map(p => p.id !== pId ? p : {
+      ...p,
+      tasks: p.tasks.map(t => t.id === tId ? { ...t, completed: !t.completed } : t),
+      progress: Math.round(
+        (p.tasks.map(t => t.id === tId ? { ...t, completed: !t.completed } : t).filter(t => t.completed).length / p.tasks.length) * 100
+      ),
+    }));
+  };
+
+  const addTask = (pId: string) => {
+    if (!newTaskTitle.trim()) return;
+    setProtocols(prev => prev.map(p => p.id !== pId ? p : {
+      ...p,
+      tasks: [...p.tasks, { id: Date.now().toString(), title: newTaskTitle.trim(), completed: false }],
+    }));
+    setNewTaskTitle('');
+  };
+
+  const deleteTask = (pId: string, tId: string) => {
+    setProtocols(prev => prev.map(p => p.id !== pId ? p : {
+      ...p, tasks: p.tasks.filter(t => t.id !== tId)
+    }));
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-xl font-bold text-white">Protocol Training</h1>
+        <p className="text-xs text-gray-400 font-mono mt-0.5">SELF-MASTERY SYSTEMS ACTIVE</p>
+      </motion.div>
+
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Active', value: protocols.filter(p => p.status === 'active').length, color: themeColor },
+          { label: 'Completed', value: protocols.filter(p => p.status === 'completed').length, color: '#00ff88' },
+          { label: 'Avg Level', value: Math.round(protocols.reduce((a, p) => a + p.level, 0) / protocols.length), color: '#ff8800' },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            className="glass-panel rounded-2xl border border-white/10 p-3 text-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.08 }}
+          >
+            <div className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</div>
+            <div className="text-[10px] text-gray-400 font-mono mt-0.5">{stat.label}</div>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        {protocols.map((protocol, pi) => (
+          <motion.div
+            key={protocol.id}
+            className="glass-panel rounded-2xl border border-white/10 overflow-hidden"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: pi * 0.1 }}
+          >
+            <div
+              className="p-4 cursor-pointer"
+              onClick={() => setExpanded(expanded === protocol.id ? null : protocol.id)}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${protocol.color}22`, border: `1px solid ${protocol.color}44` }}>
+                    <Zap size={16} style={{ color: protocol.color }} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-white truncate">{protocol.title}</h3>
+                      <Badge color={protocol.status === 'completed' ? '#00ff88' : protocol.color}>
+                        {protocol.status === 'completed' ? 'DONE' : `LVL ${protocol.level}`}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{protocol.description}</p>
+                  </div>
+                </div>
+                <div className="text-gray-400">
+                  {expanded === protocol.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <ProgressBar value={protocol.progress} color={protocol.color} showLabel />
+              </div>
+
+              <div className="flex items-center gap-2 mt-2">
+                {[...Array(Math.min(protocol.level, 10))].map((_, i) => (
+                  <Star key={i} size={10} fill={protocol.color} style={{ color: protocol.color }} />
+                ))}
+                <span className="text-[10px] text-gray-400 font-mono ml-1">{levelBadges[Math.min(protocol.level - 1, 9)]}</span>
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {expanded === protocol.id && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="border-t border-white/10"
+                >
+                  <div className="p-4 space-y-2">
+                    {protocol.tasks.map((task, ti) => (
+                      <motion.div
+                        key={task.id}
+                        className="flex items-center gap-3 group"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: ti * 0.04 }}
+                      >
+                        <button
+                          onClick={() => toggleTask(protocol.id, task.id)}
+                          className="w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                          style={{
+                            borderColor: task.completed ? protocol.color : 'rgba(255,255,255,0.2)',
+                            background: task.completed ? `${protocol.color}33` : 'transparent',
+                          }}
+                        >
+                          {task.completed && (
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                              <Check size={10} style={{ color: protocol.color }} />
+                            </motion.div>
+                          )}
+                        </button>
+                        <span className={`flex-1 text-sm ${task.completed ? 'line-through text-gray-500' : 'text-gray-200'}`}>
+                          {task.title}
+                        </span>
+                        <button
+                          onClick={() => deleteTask(protocol.id, task.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded text-gray-500 hover:text-red-400 transition-all"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </motion.div>
+                    ))}
+
+                    <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
+                      <input
+                        value={newTaskTitle}
+                        onChange={e => setNewTaskTitle(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addTask(protocol.id)}
+                        placeholder="Add new task..."
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none"
+                        style={{ borderColor: newTaskTitle ? `${protocol.color}44` : undefined }}
+                      />
+                      <button
+                        onClick={() => addTask(protocol.id)}
+                        className="p-2 rounded-xl transition-colors"
+                        style={{ background: `${protocol.color}22`, color: protocol.color }}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/App.tsx">
+import { AnimatePresence, motion } from 'framer-motion';
+import { AppProvider, useApp } from './context/AppContext';
+import { Header } from './components/layout/Header';
+import { Sidebar } from './components/layout/Sidebar';
+import { PasscodeModal } from './components/layout/PasscodeModal';
+import { AdminPanel } from './components/admin/AdminPanel';
+import { Dashboard } from './pages/Dashboard';
+import { ChatPage } from './pages/ChatPage';
+import { TrainingPage } from './pages/TrainingPage';
+import { CodeLabPage } from './pages/CodeLabPage';
+import { EducatorPage } from './pages/EducatorPage';
+import { MonitorPage } from './pages/MonitorPage';
+import { SyncPage } from './pages/SyncPage';
+import { SettingsPage } from './pages/SettingsPage';
+
+const pageMap: Record<string, React.ComponentType> = {
+  dashboard: Dashboard,
+  chat: ChatPage,
+  training: TrainingPage,
+  codelab: CodeLabPage,
+  educator: EducatorPage,
+  monitor: MonitorPage,
+  sync: SyncPage,
+  settings: SettingsPage,
+};
+
+function AppContent() {
+  const { activePage } = useApp();
+  const PageComponent = pageMap[activePage] || Dashboard;
+
+  return (
+    <div className="min-h-screen bg-[#07070f]">
+      <Header />
+      <Sidebar />
+      <PasscodeModal />
+      <AdminPanel />
+
+      <main className="pt-14 min-h-screen">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activePage}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="max-w-2xl mx-auto"
+          >
+            <PageComponent />
+          </motion.div>
+        </AnimatePresence>
+      </main>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
+  );
+}
+
+export default App;
+</file>
+
+<file path="src/index.css">
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #07070f;
+  --bg-secondary: #0d0d1a;
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-primary);
+  color: white;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(0, 212, 255, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(0, 136, 255, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(0, 0, 20, 0.8) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+option {
+  background: #1a1a2e;
+  color: white;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+</file>
+
+<file path="src/main.tsx">
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+</file>
+
+<file path="src/vite-env.d.ts">
+/// <reference types="vite/client" />
+</file>
+
+<file path=".gitignore">
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env
+</file>
+
+<file path="eslint.config.js">
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  { ignores: ['dist'] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  }
+);
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♾️</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>AF OMNIVERSE</title>
+    <meta name="description" content="Master Aatif's Digital Universe — Neural AI, Training Protocols, Code Lab & More" />
+    <meta name="theme-color" content="#00d4ff" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AF OMNIVERSE" />
+    <meta property="og:title" content="AF OMNIVERSE" />
+    <meta property="og:description" content="Master Aatif's Digital Universe" />
+    <meta property="og:image" content="https://bolt.new/static/og_default.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://bolt.new/static/og_default.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
+  </body>
+</html>
+</file>
+
+<file path="package.json">
+{
+  "name": "vite-react-typescript-starter",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+  },
+  "dependencies": {
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^0.344.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.14.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^9.9.1",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.11",
+    "globals": "^15.9.0",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.3.0",
+    "vite": "^5.4.2"
+  }
+}
+</file>
+
+<file path="postcss.config.js">
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+</file>
+
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+</file>
+
+<file path="tsconfig.app.json">
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
+</file>
+
+<file path="tsconfig.json">
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+</file>
+
+<file path="tsconfig.node.json">
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
+
+<file path="vite.config.ts">
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  optimizeDeps: {
+    exclude: ['lucide-react'],
+  },
+});
+</file>
+
+</files>
